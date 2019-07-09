@@ -34,7 +34,9 @@ static int load(struct module *module, int cmd, void *arg) {
            		/* Replace read with read_hook. */
 	    		sysent[SYS_read].sy_call = (sy_call_t *)read_hook;
             	break;
-        	default:
+     		case MOD_UNLOAD:
+			sysent[SYS_read].sy_call = (sy_call_t *)sys_read;
+		default:
             		error = EOPNOTSUPP;
             	break;
 	}
