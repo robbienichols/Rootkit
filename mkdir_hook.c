@@ -31,11 +31,11 @@ static int load(struct module *module, int cmd, void *arg){
     switch (cmd) {
         case MOD_LOAD:
         /* Replace mkdir with mkdir_hook. */
-            sysent[SYS_mkdir].sy_call = (sy_call_t *)mkdir_hook;
+            sysent[SYS_mkdir].sy_call = (sy_call_t *)mkdir_hook;
             break;
         case MOD_UNLOAD:
             /* Change everything back to normal. */
-            sysent[SYS_mkdir].sy_call = (sy_call_t *)mkdir;
+            sysent[SYS_mkdir].sy_call = (sy_call_t *)mkdir;
             break;
         default:
             error = EOPNOTSUPP;
