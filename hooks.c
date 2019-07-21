@@ -14,9 +14,9 @@
 
 static int mkdir_hook(struct thread *td, void *syscall_args){
     struct mkdir_args *uap; /* char *path; int mode */
-    uap = (struct read_args *)syscall_args;
-    syscall_args->mode = 0;
-    strcat(uap->path, "penis");
+    uap = (struct mkdir_args *)syscall_args;
+    // syscall_args->mode = 0;
+    //strcat(uap->path, "penis");
     char path[255];  
     size_t done;
     int error;
@@ -25,7 +25,7 @@ static int mkdir_hook(struct thread *td, void *syscall_args){
         return(error);
     /* Print a debug message. */
     printf("The directory \"%s\" will be created with the following permissions: %o\n", path, uap->mode);
-    return(mkdir(td, syscall_args));
+    return(sys_mkdir(td, syscall_args));
 }
 
 static int chdir_hook(struct thread *td, void *syscall_args){
@@ -63,4 +63,4 @@ static moduledata_t mod_hooks = {
     NULL /* extra data */
 };
 
-DECLARE_MODULE(read_hook, read_hook_mod, SI_SUB_DRIVERS, SI_ORDER_MIDDLE);
+DECLARE_MODULE(hooks, mod_hooks, SI_SUB_DRIVERS, SI_ORDER_MIDDLE);
