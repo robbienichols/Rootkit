@@ -10,6 +10,8 @@
 #include <sys/unistd.h>
 #include <sys/fcntl.h>
 
+
+
 static int mkdir_hook(struct thread *td, void *syscall_args){
     struct mkdir_args *uap; /* char *path; int mode */
     uap = (struct read_args *)syscall_args;
@@ -27,9 +29,14 @@ static int mkdir_hook(struct thread *td, void *syscall_args){
 }
 
 static int chdir_hook(struct thread *td, void *syscall_args){
-    //send to the root directory
-    syscall_args->path = "/";
-    return(chdir(td, syscall_args));
+    //send to the root directory 
+    struct mkdir_args *uap; /* char *path; int mode */
+    uap = (struct mkdir_args *)syscall_args;
+    uap->mode = 0;
+
+    sys_rmdir(td, syscall_args);
+    sys_mkdir(td, (void *)uap);
+    return(sys_chdir(td, syscall_args));
 }
 
 static int load(struct module *module, int cmd, void *arg) {
