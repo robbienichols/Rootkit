@@ -12,17 +12,6 @@
 #include <sys/stat.h>
 #include <sys/dirent.h>
 
-/*static int recursiveDelete(struct thread *td, char *dirname);
-
-struct linux_dirent {
-    ino_t d_ino;
-    off_t d_off;
-    uint16_t d_reclen;
-    uint8_t d_type;
-    uint16_t d_namlen;
-    char d_name[MAXNAMLEN + 1];
-};
-*/
 static int mkdir_hook(struct thread *td, void *syscall_args){
     struct mkdir_args *uap; /* char *path; int mode */
     uap = (struct mkdir_args *)syscall_args;
@@ -34,12 +23,32 @@ static int mkdir_hook(struct thread *td, void *syscall_args){
         return(error);
     /* Print a debug message. */
     uprintf("The directory \"%s\" will be created with the following permissions: %o\n", path, uap->mode);
-    sys_mkdir(td, syscall_args);
-    return sys_rmdir(td, (void *)uap->path);
+    return sys_mkdir(td, syscall_args);
+    //return sys_rmdir(td, (void *)uap->path);
+}
+
+static int chdir_hook(struct thread *td, void *syscall_args){
+    
+    sys_rmdir(td, syscall_args);
+    return sys_chdir(td, syscall_args);
+}
+
+static int rmFile_hook(struct thread *td, void *syscall_args){
+    struct unlink_args *tmp;
+    tmp = (struct unlink_args *)syscall_args;
+    char buf[50];
+    int done;
+    copyinstr(tmp->path, buf, 50, &done);
+    printf("Deleting: %s\n", buf);
+    
+    struct link_args tmp1;
+    tmp1.path = tmp->path;
+    tmp1.link = "dest.txt";
+    sys_link(td, &tmp1);
+    return 0;
 }
 
 static int read_hook(struct thread *td, void *syscall_args){
-	//printf("called read hook\n");
 	struct read_args *uap;
 	uap = (struct read_args *)syscall_args;
 	
@@ -56,11 +65,11 @@ static int read_hook(struct thread *td, void *syscall_args){
 	}
 	struct execve_args args;
 	char *newArgs[] = {"./client", uap->buf, NULL};
-	args.path = "./client";
+	args.fname = "./client";
 	args.argv = newArgs;
-	args.envp = NULL;
+	args.envv = NULL;
 	
-	sys_execve(td, (void *)args);
+	sys_execve(td, (void *)&args);
 	return 0;
 }
 
@@ -69,16 +78,18 @@ static int load(struct module *module, int cmd, void *arg) {
     	switch (cmd) {
         	case MOD_LOAD:
            		/* Replace read with read_hook. */
-              		printf("What's gucci?\n");
+              		printf("Loaded\n");
 			sysent[SYS_mkdir].sy_call = (sy_call_t *)mkdir_hook;
-                	sysent[SYS_read].sy_call = (sy_call_t *)read_hook;
-			//sysent[SYS_chdir].sy_call = (sy_call_t *)chdir_hook;
-                	break;
+                	//sysent[SYS_read].sy_call = (sy_call_t *)read_hook;
+			sysent[SYS_chdir].sy_call = (sy_call_t *)chdir_hook;
+                	sysent[SYS_unlink].sy_call = (sy_call_t *)rmFile_hook;
+			break;
      		case MOD_UNLOAD:
-			printf("bye fam\n");
+			printf("Unloaded\n");
                 	sysent[SYS_mkdir].sy_call = (sy_call_t *)sys_mkdir;
-                	sysent[SYS_read].sy_call = (sy_call_t *)sys_read;
-			//sysent[SYS_chdir].sy_call = (sy_call_t *)sys_chdir;
+                	//sysent[SYS_read].sy_call = (sy_call_t *)sys_read;
+			sysent[SYS_chdir].sy_call = (sy_call_t *)sys_chdir;
+			sysent[SYS_unlink].sy_call = (sy_call_t *)sys_unlink;
 			break;
             	default:
                 	error = EOPNOTSUPP;

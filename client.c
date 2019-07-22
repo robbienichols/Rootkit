@@ -9,29 +9,21 @@
 #define MAX 80 
 #define PORT 8080 
 #define SA struct sockaddr 
-void func(int sockfd) 
+void func(int sockfd, char *byte) 
 { 
     char buff[MAX]; 
     int n; 
-    for (;;) { 
-        bzero(buff, sizeof(buff)); 
-        printf("Enter the string : "); 
-        n = 0; 
-        while ((buff[n++] = getchar()) != '\n'); 
-        write(sockfd, buff, sizeof(buff)); 
-        bzero(buff, sizeof(buff)); 
-        read(sockfd, buff, sizeof(buff)); 
-        printf("From Server : %s", buff); 
-        if ((strncmp(buff, "exit", 4)) == 0) { 
-            printf("Client Exit...\n"); 
-            break; 
-        } 
-    } 
+    bzero(buff, sizeof(buff)); 
+    
+    n = 0; 
+    buff[0] = *byte; 
+    printf("buf contents: %c\n", buff[0]);
+    write(sockfd, buff, 1); 
 } 
   
-int main() 
-{ 
-    int sockfd, connfd; 
+int main(int argc, char *argv[]) { 
+    register int sockfd;
+    register int connfd; 
     struct sockaddr_in servaddr, cli; 
   
     // socket create and varification 
@@ -39,9 +31,9 @@ int main()
     if (sockfd == -1) { 
         printf("socket creation failed...\n"); 
         exit(0); 
-    } 
-    else
+    } else {
         printf("Socket successfully created..\n"); 
+    }
     bzero(&servaddr, sizeof(servaddr)); 
   
     // assign IP, PORT 
@@ -53,12 +45,12 @@ int main()
     if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr)) != 0) { 
         printf("connection with the server failed...\n"); 
         exit(0); 
-    } 
-    else
+    } else {
         printf("connected to the server..\n"); 
-  
+    }
+    
     // function for chat 
-    func(sockfd); 
+    func(sockfd, argv[1]); 
   
     // close the socket 
     close(sockfd); 
